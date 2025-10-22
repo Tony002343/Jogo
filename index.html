@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Desafio dos Sólidos — Versão 3min com Imagens</title>
+<style>
+  :root{
+    --bg1: #ffecd2;
+    --bg2: #fcb69f;
+    --accent: #7c3aed;
+    --accent-2: #06b6d4;
+    --card: #ffffff;
+    --muted: #4b5563;
+  }
+  html,body{height:100%;margin:0;padding:0;}
+  body {
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: linear-gradient(135deg, var(--bg1), var(--bg2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding:24px;
+  }
+  .game {
+    width:100%;
+    max-width:1000px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.92));
+    border-radius:18px;
+    box-shadow: 0 10px 30px rgba(16,24,40,0.18);
+    overflow:hidden;
+    display:grid;
+    grid-template-columns: 1fr 360px;
+    gap:18px;
+  }
+  header {
+    grid-column:1/-1;
+    padding:20px 28px;
+    display:flex;
+    align-items:center;
+    gap:18px;
+  }
+  .logo {
+    width:68px;height:68px;border-radius:12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color:white; display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:20px; box-shadow:0 6px 18px rgba(124,58,237,0.28);
+  }
+  h1 { margin:0; font-size:20px; }
+  p.lead { margin:0; color:var(--muted); font-size:13px; }
+
+  main { padding:20px; }
+  aside {
+    padding:20px;
+    border-left: 1px dashed rgba(16,24,40,0.05);
+    background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4));
+  }
+
+  .stats { display:flex; gap:8px; margin-bottom:12px; }
+  .stat {
+    background: linear-gradient(180deg,#fff,#f9fafb);
+    padding:10px; border-radius:10px; flex:1; text-align:center;
+    box-shadow:0 4px 10px rgba(2,6,23,0.06);
+  }
+  .stat small { display:block; color:var(--muted); font-size:12px; }
+  .stat strong { display:block; font-size:18px; margin-top:6px; }
+
+  .controls { display:flex; gap:8px; margin-bottom:14px; align-items:center; }
+  .btn {
+    padding:8px 10px; border-radius:10px; border:0; cursor:pointer; font-weight:600;
+    box-shadow: 0 6px 14px rgba(2,6,23,0.06);
+  }
+  .btn-primary { background: linear-gradient(90deg, var(--accent), #5b21b6); color:white; }
+  .btn-ghost { background:transparent; border:2px solid rgba(16,24,40,0.06); }
+
+  .card {
+    background: var(--card); padding:14px; border-radius:12px; margin-bottom:12px;
+    box-shadow: 0 8px 20px rgba(2,6,23,0.05);
+  }
+
+  .solid-name { font-weight:700; font-size:18px; margin-bottom:6px; }
+  .hint { color:var(--muted); font-size:13px; margin-bottom:10px; }
+
+  .params { font-size:13px; color:#334155; margin-bottom:10px; }
+  .input-row { display:flex; gap:8px; align-items:center; }
+  input[type=number] {
+    flex:1; padding:10px; border-radius:10px; border:1px solid rgba(2,6,23,0.06);
+    font-size:14px; text-align:center;
+  }
+  .small { font-size:12px; color:var(--muted); }
+
+  .flash-success { animation: flashGreen 0.45s ease; }
+  .flash-error { animation: flashRed 0.45s ease; }
+  @keyframes flashGreen {
+    0% { box-shadow:0 0 0 rgba(16,185,129,0); }
+    50% { box-shadow:0 0 40px rgba(16,185,129,0.12); }
+    100% { box-shadow:0 0 0 rgba(16,185,129,0); }
+  }
+  @keyframes flashRed {
+    0% { box-shadow:0 0 0 rgba(239,68,68,0); }
+    50% { box-shadow:0 0 40px rgba(239,68,68,0.12); }
+    100% { box-shadow:0 0 0 rgba(239,68,68,0); }
+  }
+
+  .footer { font-size:12px; color:var(--muted); margin-top:8px; }
+
+  @media (max-width:920px){
+    .game { grid-template-columns:1fr; }
+    aside { border-left:none; border-top:1px dashed rgba(16,24,40,0.05); }
+  }
+
+  .net {
+    width:100%; height:120px; border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    border:1px dashed rgba(2,6,23,0.06);
+    margin-bottom:12px;
+  }
+  .mode-pill {
+    font-size:12px; padding:6px 8px; border-radius:999px;
+    background:rgba(255,255,255,0.6); border:1px solid rgba(2,6,23,0.04);
+  }
+</style>
+</head>
+<body>
+<div class="game" id="gameRoot">
+  <header>
+    <div class="logo">GEO</div>
+    <div>
+      <h1>Desafio dos Sólidos — Versão 3min</h1>
+      <p class="lead">Jogo educativo: calcule volumes com tempo extra e imagens dos sólidos.</p>
+    </div>
+    <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
+      <div class="mode-pill" id="clickToEnableAudio">Clique para ativar som</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="card">
+      <div class="stats">
+        <div class="stat"><small>Tempo</small><strong id="timeLeft">180s</strong></div>
+        <div class="stat"><small>Nível</small><strong id="level">1</strong></div>
+        <div class="stat"><small>Pontos</small><strong id="scoreDisplay">0 — 0</strong></div>
+      </div>
+
+      <div class="controls">
+        <button class="btn btn-primary" id="btnSingle">Single</button>
+        <button class="btn btn-ghost" id="btnDuo">2 Players</button>
+        <button class="btn btn-ghost" id="btnReset">Reiniciar</button>
+      </div>
+
+      <div class="card" id="challengeCard">
+        <div class="solid-name" id="solidName">Cubo</div>
+        <div class="hint" id="solidHint">6 faces quadradas</div>
+        <div class="net" id="netVisual"><!-- imagem vai aparecer aqui --></div>
+
+        <div class="params" id="paramList">aresta: 3 cm</div>
+
+        <div class="input-row">
+          <input id="answerInput" type="number" placeholder="Digite o volume (cm³)" />
+          <button class="btn btn-primary" id="btnCheck">Verificar</button>
+        </div>
+
+        <div style="margin-top:10px;" class="small" id="messageBox">Boa sorte! Acertos dão tempo bônus.</div>
+      </div>
+    </div>
+  </main>
+
+  <aside>
+    <div class="card">
+      <strong>Regras rápidas</strong>
+      <ul class="small" style="line-height:1.6; margin-top:6px;">
+        <li>Começa com 180 segundos.</li>
+        <li>Cada acerto adiciona **+30 s** e pontos.</li>
+        <li>π ≈ 3.14 para todos os cálculos.</li>
+        <li>Modo 2 jogadores: acerto passa de vez, erro tira pontos.</li>
+      </ul>
+    </div>
+  </aside>
+</div>
+
+<script>
+const PI = 3.14;
+const SOLIDS = [
+  { id:'cube', name:'Cubo', hint:'6 faces quadradas', param:['aresta'], volume:(a)=>a**3,
+    img:'https://upload.wikimedia.org/wikipedia/commons/3/3a/Net_of_cube.png' },
+  { id:'rectprism', name:'Paralelepípedo', hint:'Faces retangulares', param:['comprimento','largura','altura'], volume:(a,b,c)=>a*b*c,
+    img:'https://upload.wikimedia.org/wikipedia/commons/4/42/Net_of_rectangular_prism.png' },
+  { id:'cylinder', name:'Cilindro', hint:'2 bases circulares', param:['raio','altura'], volume:(r,h)=>PI*r*r*h,
+    img:'https://upload.wikimedia.org/wikipedia/commons/2/24/Net_of_cylinder.svg' },
+  { id:'cone', name:'Cone', hint:'1 base circular + vértice', param:['raio','altura'], volume:(r,h)=> (PI*r*r*h)/3,
+    img:'https://upload.wikimedia.org/wikipedia/commons/2/26/Net_of_cone.svg' },
+  { id:'pyramid', name:'Pirâmide (base quadrada)', hint:'Base quadrada + faces triangulares', param:['aresta','altura'], volume:(a,h)=> (a**2*h)/3,
+    img:'https://upload.wikimedia.org/wikipedia/commons/5/5a/Net_of_square_pyramid.svg' },
+  { id:'sphere', name:'Esfera', hint:'Superfície contínua', param:['raio'], volume:(r)=> (4/3)*PI*r**3,
+    img:'https://upload.wikimedia.org/wikipedia/commons/0/0f/Net_of_sphere.svg' }
+];
+
+let mode='single', level=1, timeLeft=180, scores=[0,0], playerTurn=0, running=true, currentSolid=null, params=[];
+
+const timeLeftEl = document.getElementById('timeLeft');
+const levelEl = document.getElementById('level');
+const scoreDisplayEl = document.getElementById('scoreDisplay');
+const solidNameEl = document.getElementById('solidName');
+const solidHintEl = document.getElementById('solidHint');
+const paramListEl = document.getElementById('paramList');
+const messageBox = document.getElementById('messageBox');
+const answerInput = document.getElementById('answerInput');
+const btnCheck = document.getElementById('btnCheck');
+const btnSingle = document.getElementById('btnSingle');
+const btnDuo = document.getElementById('btnDuo');
+const btnReset = document.getElementById('btnReset');
+const clickToEnableAudio = document.getElementById('clickToEnableAudio');
+const netVisual = document.getElementById('netVisual');
+const gameRoot = document.getElementById('gameRoot');
+
+let audioCtx = null;
+function ensureAudio(){ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }
+function playSuccess(){ try{ ensureAudio(); const ctx=audioCtx, t=ctx.currentTime; const o1=ctx.createOscillator(), o2=ctx.createOscillator(), g=ctx.createGain(); o1.connect(g); o2.connect(g); g.connect(ctx.destination); o1.frequency.value=880; o2.frequency.value=1320; g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.18,t+0.01); o1.start(t); o2.start(t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.35); o1.stop(t+0.37); o2.stop(t+0.37);}catch(e){}}
+function playFail(){ try{ ensureAudio(); const ctx=audioCtx, t=ctx.currentTime; const o=ctx.createOscillator(), g=ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.type='sawtooth'; o.frequency.value=160; g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.18,t+0.01); o.start(t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.5); o.stop(t+0.52);}catch(e){}}
+function flash(type){ gameRoot.classList.remove('flash-success','flash-error'); gameRoot.classList.add(type==='success'?'flash-success':'flash-error'); setTimeout(()=>gameRoot.classList.remove('flash-success','flash-error'),500); }
+function updateUI(){ timeLeftEl.textContent = timeLeft+'s'; levelEl.textContent = level; scoreDisplayEl.textContent = `${scores[0]} — ${scores[1]}`; }
+function showMessage(msg){ messageBox.textContent = msg; }
+function nextChallenge(){
+  const s = SOLIDS[Math.floor(Math.random()*SOLIDS.length)];
+  currentSolid = s;
+  params = s.param.map(()=>Math.floor(Math.random()*6)+1);
+  solidNameEl.textContent = s.name;
+  solidHintEl.textContent = s.hint;
+  paramListEl.textContent = s.param.map((p,i)=>`${p}: ${params[i]} cm`).join(' • ');
+  answerInput.value = '';
+  netVisual.innerHTML = `<img src="${s.img}" alt="${s.name}" style="max-height:100px;">`;
+  showMessage(`Nível ${level}: calcule o volume do ${s.name}.`);
+}
+function checkAnswer(){
+  if(!currentSolid) return;
+  const expected = currentSolid.volume(...params);
+  const user = parseFloat(answerInput.value);
+  const tol = Math.max(0.5, Math.abs(expected)*0.02);
+  if(Number.isFinite(user) && Math.abs(user-expected)<=tol){
+    playSuccess(); flash('success');
+    const pts = 15*level;
+    scores[playerTurn]+=pts;
+    timeLeft+=30;
+    showMessage(`✅ Correto! +${pts} pontos (+30s)`);
+    level++;
+  } else {
+    playFail(); flash('error');
+    scores[playerTurn] = Math.max(0, scores[playerTurn]-5);
+    showMessage(`❌ Errado! Volume = ${expected.toFixed(2)} cm³`);
+    if(mode==='duo') playerTurn = 1 - playerTurn;
+  }
+  updateUI(); nextChallenge();
+}
+btnCheck.onclick = checkAnswer;
+answerInput.onkeydown = e=>{ if(e.key==='Enter') checkAnswer(); };
+btnReset.onclick = ()=>{
+  level=1; timeLeft=180; scores=[0,0]; playerTurn=0; running=true;
+  updateUI(); nextChallenge(); showMessage('🔁 Jogo reiniciado!');
+};
+btnSingle.onclick = ()=>{
+  mode='single'; btnSingle.classList.add('btn-primary'); btnDuo.classList.remove('btn-primary');
+  level=1; timeLeft=180; scores=[0,0]; playerTurn=0; running=true;
+  updateUI(); nextChallenge(); showMessage('Modo individual ativo.');
+};
+btnDuo.onclick = ()=>{
+  mode='duo'; btnDuo.classList.add('btn-primary'); btnSingle.classList.remove('btn-primary');
+  level=1; timeLeft=180; scores=[0,0]; playerTurn=0; running=true;
+  updateUI(); nextChallenge(); showMessage('Modo 2 jogadores ativo.');
+};
+clickToEnableAudio.onclick = ()=>{
+  ensureAudio(); audioCtx.resume && audioCtx.resume();
+  clickToEnableAudio.textContent = 'Áudio ativado ✔';
+};
+
+updateUI();
+nextChallenge();
+showMessage('Clique em “Single” ou “2 Players” para começar.');
+
+setInterval(()=>{
+  if(!running) return;
+  timeLeft--; updateUI();
+  if(timeLeft<=0){ running=false; showMessage('⏰ Tempo esgotado!');}
+},1000);
+
+</script>
+</body>
+</html>
