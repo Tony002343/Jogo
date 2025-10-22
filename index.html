@@ -1,35 +1,43 @@
 import React, { useState, useEffect } from "react";
 
-// GeoSolidsGamePlus.jsx — versão ajustada com 3 minutos iniciais por rodada
-// Tempo inicial aumentado e bônus de tempo maior após acertos.
+// 🎮 Desafio dos Sólidos — Versão Plus (tempo ajustado e π = 3.14)
+
+const PI = 3.14; // Usando valor fixo de pi
 
 const SOLIDS = [
   { id: "cube", name: "Cubo", hint: "6 faces quadradas", volume: (a) => a ** 3, param: "aresta" },
   { id: "rectprism", name: "Paralelepípedo", hint: "Faces retangulares", volume: (a,b,c) => a * b * c, param: ["comprimento", "largura", "altura"] },
-  { id: "cylinder", name: "Cilindro", hint: "2 bases circulares", volume: (r,h) => Math.PI * r ** 2 * h, param: ["raio", "altura"] },
-  { id: "cone", name: "Cone", hint: "1 base circular + vértice", volume: (r,h) => (Math.PI * r ** 2 * h) / 3, param: ["raio", "altura"] },
+  { id: "cylinder", name: "Cilindro", hint: "2 bases circulares", volume: (r,h) => PI * r ** 2 * h, param: ["raio", "altura"] },
+  { id: "cone", name: "Cone", hint: "1 base circular + vértice", volume: (r,h) => (PI * r ** 2 * h) / 3, param: ["raio", "altura"] },
   { id: "pyramid", name: "Pirâmide", hint: "Base quadrada + faces triangulares", volume: (a,h) => (a ** 2 * h) / 3, param: ["aresta da base", "altura"] },
-  { id: "sphere", name: "Esfera", hint: "Superfície contínua", volume: (r) => (4/3) * Math.PI * r ** 3, param: "raio" }
+  { id: "sphere", name: "Esfera", hint: "Superfície contínua", volume: (r) => (4/3) * PI * r ** 3, param: "raio" }
 ];
-
-function shuffle(array) {
-  const a = array.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
 
 export default function GeoSolidsGamePlus() {
   const [level, setLevel] = useState(1);
-  const [time, setTime] = useState(180); // ⏱️ tempo inicial aumentado para 3 minutos (180s)
+  const [time, setTime] = useState(180); // ⏱️ tempo inicial de 3 minutos
   const [score, setScore] = useState(0);
   const [currentSolid, setCurrentSolid] = useState(null);
   const [params, setParams] = useState({});
   const [answer, setAnswer] = useState("");
   const [message, setMessage] = useState("");
   const [running, setRunning] = useState(true);
+  const [turn, setTurn] = useState(1);
+  const [playerScores, setPlayerScores] = useState({ 1: 0, 2: 0 });
+  const [twoPlayers, setTwoPlayers] = useState(false);
+
+  // Som gerado dinamicamente
+  function playSound(correct = true) {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = correct ? 600 : 200;
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.3);
+  }
 
   useEffect(() => {
     nextChallenge();
@@ -39,7 +47,7 @@ export default function GeoSolidsGamePlus() {
     if (!running) return;
     if (time <= 0) {
       setRunning(false);
-      setMessage("⏰ Tempo esgotado! Sua pontuação final: " + score);
+      setMessage(`⏰ Tempo esgotado! Pontuação final: P1 ${playerScores[1]}, P2 ${playerScores[2]}`);
       return;
     }
     const timer = setTimeout(() => setTime(time - 1), 1000);
@@ -48,7 +56,9 @@ export default function GeoSolidsGamePlus() {
 
   function nextChallenge() {
     const s = SOLIDS[Math.floor(Math.random() * SOLIDS.length)];
-    const randomParams = Array.isArray(s.param) ? s.param.map(() => (Math.floor(Math.random() * 5) + 1)) : [Math.floor(Math.random() * 5) + 1];
+    const randomParams = Array.isArray(s.param)
+      ? s.param.map(() => Math.floor(Math.random() * 5) + 1)
+      : [Math.floor(Math.random() * 5) + 1];
     setParams(randomParams);
     setCurrentSolid(s);
     setAnswer("");
@@ -61,16 +71,27 @@ export default function GeoSolidsGamePlus() {
       ? currentSolid.volume(...params)
       : currentSolid.volume(params[0]);
     const userValue = parseFloat(answer);
-    const tolerance = 0.5; // pequena tolerância
+    const tolerance = 0.5;
 
     if (Math.abs(userValue - expected) <= tolerance) {
+      playSound(true);
       setScore(score + 15 * level);
-      setMessage("✅ Correto! +" + 15 * level + " pontos");
+      setMessage(`✅ Correto! +${15 * level} pontos`);
       setLevel(level + 1);
-      setTime(time + 30); // 🔺 bônus de 30 segundos por acerto
+      setTime(time + 30); // bônus de 30 segundos
+      if (twoPlayers) {
+        setPlayerScores({
+          ...playerScores,
+          [turn]: playerScores[turn] + 15 * level
+        });
+      }
     } else {
-      setScore(Math.max(0, score - 5));
+      playSound(false);
       setMessage(`❌ Errado! O volume era ${expected.toFixed(2)}. -5 pontos`);
+      setScore(Math.max(0, score - 5));
+      if (twoPlayers) {
+        setTurn(turn === 1 ? 2 : 1);
+      }
     }
     nextChallenge();
   }
@@ -80,19 +101,30 @@ export default function GeoSolidsGamePlus() {
     setScore(0);
     setTime(180); // reinicia com 3 minutos
     setRunning(true);
-    nextChallenge();
     setMessage("");
+    setPlayerScores({ 1: 0, 2: 0 });
+    setTurn(1);
+    nextChallenge();
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-yellow-100 via-orange-100 to-pink-100 p-6 animate-fadeIn">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-yellow-100 via-orange-200 to-pink-200 p-6">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6 text-center border-4 border-orange-400">
-        <h1 className="text-3xl font-extrabold mb-2 text-orange-600 drop-shadow">Desafio dos Sólidos — Versão Plus</h1>
+        <h1 className="text-3xl font-extrabold mb-3 text-orange-600 drop-shadow">Desafio dos Sólidos — Plus</h1>
+        
         <div className="flex justify-around mb-4 text-sm font-semibold text-orange-700">
           <div>⏱️ Tempo: {time}s</div>
           <div>⭐ Pontos: {score}</div>
           <div>🔥 Nível: {level}</div>
         </div>
+
+        {twoPlayers && (
+          <div className="flex justify-around text-sm mb-4 font-bold text-orange-800">
+            <div>👤 Jogador 1: {playerScores[1]}</div>
+            <div>👤 Jogador 2: {playerScores[2]}</div>
+            <div>🎯 Vez de: Jogador {turn}</div>
+          </div>
+        )}
 
         {currentSolid && (
           <div className="mb-3">
@@ -112,21 +144,32 @@ export default function GeoSolidsGamePlus() {
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
           placeholder="Digite o volume (cm³)"
-          className="border-2 border-orange-400 rounded-md p-2 w-3/4 text-center focus:outline-none focus:ring-4 focus:ring-orange-300"
+          className="border-2 border-orange-400 rounded-md p-2 w-3/4 text-center focus:ring-4 focus:ring-orange-300"
           disabled={!running}
         />
 
-        <div className="mt-3 space-x-3">
+        <div className="mt-4 space-x-3">
           <button
             onClick={checkAnswer}
             className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 shadow-md"
             disabled={!running}
-          >Verificar</button>
+          >
+            Verificar
+          </button>
 
           <button
             onClick={resetGame}
             className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 shadow-md"
-          >Reiniciar</button>
+          >
+            Reiniciar
+          </button>
+
+          <button
+            onClick={() => setTwoPlayers(!twoPlayers)}
+            className="bg-pink-500 text-white px-4 py-2 rounded-md hover:bg-pink-600 shadow-md"
+          >
+            {twoPlayers ? "Modo 1 Jogador" : "Modo 2 Jogadores"}
+          </button>
         </div>
 
         <div className="mt-4 text-sm text-slate-800 min-h-6 font-semibold">{message}</div>
