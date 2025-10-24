@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Desafio: Volumes & Áreas</title>
+<style>
+  :root{
+    --bg:#000;
+    --card-bg:#ffffff;
+    --muted:#cbd5e1;
+    --accent:#7c3aed;
+    --accent-2:#06b6d4;
+    --success:#10b981; --error:#f87171;
+    --overlay: rgba(2,6,23,0.65);
+  }
+  html,body{height:100%;margin:0;font-family:Inter, Roboto, "Segoe UI", Arial;}
+  body{
+    background: var(--bg);
+    display:flex;align-items:center;justify-content:center;padding:24px;
+  }
+  .game{
+    width:100%; max-width:1000px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.96));
+    border-radius:18px; box-shadow:0 10px 30px rgba(0,0,0,0.5);
+    overflow:hidden; display:grid; grid-template-columns:1fr 360px; gap:18px;
+  }
+  header{grid-column:1/-1;padding:20px 28px;display:flex;align-items:center;gap:18px;}
+  .logo{width:68px;height:68px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;box-shadow:0 6px 18px rgba(124,58,237,0.28);}
+  h1{margin:0;font-size:20px;} p.lead{margin:0;color:#334155;font-size:13px;}
+  main{padding:20px;} aside{padding:20px;border-left:1px dashed rgba(2,6,23,0.06);background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.86));}
+  .card{background:var(--card-bg);padding:14px;border-radius:12px;margin-bottom:12px;box-shadow:0 8px 20px rgba(2,6,23,0.06);}
+  .stats{display:flex;gap:8px;margin-bottom:12px;}
+  .stat{background:linear-gradient(180deg,#fff,#f9fafb);padding:10px;border-radius:10px;flex:1;text-align:center;box-shadow:0 4px 10px rgba(2,6,23,0.04);}
+  .stat small{display:block;color:#64748b;font-size:12px;} .stat strong{display:block;font-size:18px;margin-top:6px;}
+  .controls{display:flex;gap:8px;margin-bottom:14px;align-items:center;}
+  .btn{padding:8px 10px;border-radius:10px;border:0;cursor:pointer;font-weight:600;box-shadow:0 6px 14px rgba(2,6,23,0.06);}
+  .btn-primary{background:linear-gradient(90deg,var(--accent),#5b21b6);color:#fff;} .btn-ghost{background:transparent;border:2px solid rgba(16,24,40,0.06);}
+  .net{width:100%;height:200px;border-radius:8px;background:linear-gradient(180deg,#fff,#fbfbff);display:flex;align-items:center;justify-content:center;border:1px dashed rgba(2,6,23,0.06);}
+  .net img{ max-width:320px; max-height:180px; width:auto; height:auto; display:block; }
+  .pi-badge{font-size:12px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.85);border:1px solid rgba(2,6,23,0.06);}
+
+  /* question title (enunciado) */
+  .question-title { font-weight:700; font-size:18px; margin-bottom:6px; color:#111; }
+
+  /* modal */
+  .modal-overlay{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:var(--overlay); z-index:9999; opacity:0; pointer-events:none; transition:opacity .18s; }
+  .modal-overlay.show{ opacity:1; pointer-events:auto; }
+  .modal { width:720px; max-width:94%; background:var(--card-bg); border-radius:8px; padding:28px 30px; box-shadow: 0 30px 80px rgba(0,0,0,0.6); text-align:center; position:relative; display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .modal-icon { width:120px; height:120px; border-radius:999px; display:flex; align-items:center; justify-content:center; border:6px solid rgba(0,0,0,0.06); background: #fff; box-sizing:border-box; margin-top:-10px; }
+  .modal-icon svg { width:70px; height:70px; }
+  .modal h2{ margin: 8px 0 6px 0; font-size:28px; color:#111; }
+  .modal p { margin:0; color:#334155; font-size:16px; line-height:1.3; max-width:620px; }
+  .modal .big-answer { font-weight:700; font-size:20px; margin-top:6px; color:#111; }
+  .modal .okbtn{ margin-top:16px; padding:10px 18px; border-radius:10px; border:4px solid rgba(255,255,255,0.25); background: linear-gradient(90deg,#16a34a,#10b981); color:#fff; font-weight:700; cursor:pointer; box-shadow: 0 6px 12px rgba(16,185,129,0.18); }
+  .modal .okbtn.secondary{ background:transparent; color:#334155; border:1px solid rgba(2,6,23,0.06); box-shadow:none; }
+  .modal .countdown { margin-top:8px; color:#475569; font-size:14px; }
+  .modal .formula { margin-top:8px; background:#f8fafc; padding:12px; border-radius:8px; width:100%; max-width:620px; color:#111; font-family:monospace; white-space:pre-wrap; display:none; text-align:left; }
+
+  /* intro modal */
+  .intro-overlay{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background: rgba(0,0,0,0.7); z-index:10000; opacity:0; pointer-events:none; transition:opacity .18s; }
+  .intro-overlay.show{ opacity:1; pointer-events:auto; }
+  .intro-modal { width:640px; max-width:92%; background:var(--card-bg); border-radius:12px; padding:28px; box-shadow:0 30px 80px rgba(0,0,0,0.6); text-align:center; }
+  .intro-modal h2{ margin:0 0 8px 0; font-size:26px; }
+  .intro-modal p{ margin:0 0 16px 0; color:#334155; }
+  .intro-modal .start-btn{ padding:12px 18px; border-radius:12px; font-weight:800; cursor:pointer; background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#fff; border:0; }
+
+  /* game-over modal */
+  .gameover-overlay{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background: rgba(0,0,0,0.75); z-index:11000; opacity:0; pointer-events:none; transition:opacity .18s; }
+  .gameover-overlay.show{ opacity:1; pointer-events:auto; }
+  .gameover-modal{ width:560px; max-width:92%; background:var(--card-bg); border-radius:12px; padding:24px; text-align:center; box-shadow:0 30px 80px rgba(0,0,0,0.6); }
+  .gameover-modal h2{ margin:0 0 8px 0; font-size:24px; }
+  .gameover-modal p{ margin:0 0 12px 0; color:#334155; }
+  .gameover-modal .restart-btn{ padding:10px 16px; border-radius:10px; font-weight:700; background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#fff; border:0; cursor:pointer; }
+
+  @media (max-width:640px){
+    .net{height:140px;}
+    .net img{ max-width:200px; max-height:120px; }
+    .modal{ padding:18px; }
+    .modal h2{ font-size:20px; }
+  }
+</style>
+</head>
+<body>
+<div class="game" id="gameRoot">
+  <header>
+    <div class="logo">GEO</div>
+    <div>
+      <h1>Desafio: Volumes & Áreas</h1>
+      <p class="lead">Pratique cálculo de volumes e áreas — modo single player.</p>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+      <div class="pi-badge" id="piBadge">π = 3.14</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="card">
+      <div class="stats">
+        <div class="stat"><small>Tempo</small><strong id="timeLeft">180s</strong></div>
+        <div class="stat"><small>Nível</small><strong id="level">1</strong></div>
+        <div class="stat"><small>Pontuação</small><strong id="scoreDisplay">0</strong></div>
+      </div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+        <div class="controls">
+          <!-- botão "Começar" visível REMOVIDO conforme pedido -->
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+          <button class="btn btn-ghost" id="btnReset">Reiniciar</button>
+        </div>
+      </div>
+
+      <div class="card" id="challengeCard">
+        <!-- Enunciado / título da questão -->
+        <div class="question-title" id="questionTitle">Nível 1: calcule o volume do Pirâmide (base quadrada)</div>
+
+        <!-- Hint abaixo do enunciado -->
+        <div class="hint" id="solidHint">6 faces quadradas</div>
+
+        <div class="net" id="netVisual"></div>
+
+        <div class="params" id="paramList">Aresta: 3 cm</div>
+
+        <div class="input-row" style="display:flex;gap:8px;align-items:center;">
+          <input id="answerInput" type="number" placeholder="Digite o resultado (cm² ou cm³)" />
+          <button class="btn btn-primary" id="btnCheck">Verificar</button>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;align-items:center;">
+          <div class="small" id="messageBox">Boa sorte! Acertos aumentam nível e dão tempo extra.</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <aside>
+    <div class="card">
+      <strong>Controles & Regras</strong>
+      <ul class="small" style="line-height:1.6;margin-top:8px;">
+        <li>Single player: acerte volumes ou áreas.</li>
+        <li>Acertos: pontos (15×nível) e +20s.</li>
+        <li>Erros: -5 pontos.</li>
+      </ul>
+      <div class="footer" style="margin-top:8px">π = 3.14 — use aproximações. Tolerância ~2%.</div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <div><strong>Status</strong></div>
+      <div style="margin-top:8px;"><strong id="statusMsg">Pronto!</strong></div>
+    </div>
+  </aside>
+</div>
+
+<!-- Result Modal -->
+<div id="resultModalOverlay" class="modal-overlay" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="modal" id="resultModal" role="document" aria-labelledby="modalTitle">
+    <div id="modalIcon" class="modal-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="M9 12l2 2 4-4"></path>
+      </svg>
+    </div>
+
+    <h2 id="modalTitle">Parabéns!</h2>
+    <p id="modalText" class="big-answer">Acertou!</p>
+    <p id="modalDetail" style="margin-top:6px;color:#334155"></p>
+
+    <div class="formula" id="modalFormula"></div>
+
+    <div class="countdown" id="modalCountdown">Próxima em 15s</div>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button id="modalShowFormulaBtn" class="okbtn secondary">Mostrar fórmula</button>
+      <button id="modalOkBtn" class="okbtn">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Intro modal -->
+<div id="introOverlay" class="intro-overlay show" aria-hidden="false" role="dialog" aria-modal="true">
+  <div class="intro-modal" role="document" aria-labelledby="introTitle">
+    <h2 id="introTitle">Bem-vindo ao Desafio dos Sólidos</h2>
+    <p>Pratique volumes e áreas. Você terá tempo extra ao acertar. Clique em começar quando estiver pronto.</p>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
+      <button id="introStartBtn" class="start-btn">Começar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Game Over modal -->
+<div id="gameOverOverlay" class="gameover-overlay" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="gameover-modal" role="document" aria-labelledby="gameOverTitle">
+    <h2 id="gameOverTitle">Tempo esgotado!</h2>
+    <p id="finalScoreText">Sua pontuação: 0</p>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
+      <button id="gameOverRestartBtn" class="restart-btn">Reiniciar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ========= Jogo com enunciado/título da questão acima ========= */
+
+const INITIAL_TIME = 180;
+const TIME_BONUS = 20;
+const PI = 3.14;
+const DELAY_MS = 15000; // 15s
+
+document.getElementById('piBadge').textContent = `π = ${PI}`;
+
+const SOLIDS = [
+  { id: 'cube', type:'volume', name: 'Cubo', hint: '6 faces quadradas', param: ['aresta'], volume: (a) => a ** 3, formula: 'V = a³' },
+  { id: 'rectprism', type:'volume', name: 'Paralelepípedo', hint: 'Faces retangulares', param: ['comprimento','largura','altura'], volume: (l,w,h) => l*w*h, formula: 'V = comprimento × largura × altura' },
+  { id: 'cylinder', type:'volume', name: 'Cilindro', hint: '2 bases circulares', param: ['raio','altura'], volume: (r,h) => PI * r * r * h, formula: 'V = π × r² × altura' },
+  { id: 'cone', type:'volume', name: 'Cone', hint: '1 base circular + vértice', param: ['raio','altura'], volume: (r,h) => (PI * r * r * h)/3, formula: 'V = (π × r² × altura) / 3' },
+  { id: 'pyramid', type:'volume', name: 'Pirâmide (base quadrada)', hint: 'Base quadrada + faces triangulares', param: ['aresta da base','altura'], volume: (a,h) => (a*a*h)/3, formula: 'V = (aresta² × altura) / 3' },
+  { id: 'sphere', type:'volume', name: 'Esfera', hint: 'Superfície contínua', param: ['raio'], volume: (r) => (4/3) * PI * r * r * r, formula: 'V = (4/3) × π × r³' }
+];
+
+const AREAS = [
+  { id:'square', type:'area', name:'Quadrado', param:['aresta'], area: (a)=> a*a, formula: 'A = a²' },
+  { id:'rectangle', type:'area', name:'Retângulo', param:['comprimento','largura'], area:(l,w)=> l*w, formula: 'A = comprimento × largura' },
+  { id:'circle', type:'area', name:'Círculo', param:['raio'], area:(r)=> PI * r * r, formula: 'A = π × r²' },
+  { id:'triangle', type:'area', name:'Triângulo', param:['base','altura'], area:(b,h)=> (b*h)/2, formula: 'A = (base × altura) / 2' }
+];
+
+const paramNamesMap = {
+  'aresta':'Aresta',
+  'comprimento':'Comprimento',
+  'largura':'Largura',
+  'altura':'Altura',
+  'raio':'Raio',
+  'aresta da base':'Aresta da Base',
+  'base':'Base'
+};
+
+let level = 1;
+let timeLeft = INITIAL_TIME;
+let score = 0;
+let current = null;
+let currentMode = 'volume';
+let params = [];
+let running = false;
+let nextTimeout = null;
+let modalInterval = null;
+
+/* DOM refs */
+const questionTitleEl = document.getElementById('questionTitle');
+const solidHintEl = document.getElementById('solidHint');
+const paramListEl = document.getElementById('paramList');
+const netVisual = document.getElementById('netVisual');
+const answerInput = document.getElementById('answerInput');
+const messageBox = document.getElementById('messageBox');
+const timeLeftEl = document.getElementById('timeLeft');
+const levelEl = document.getElementById('level');
+const scoreDisplay = document.getElementById('scoreDisplay');
+const btnCheck = document.getElementById('btnCheck');
+const btnReset = document.getElementById('btnReset');
+const statusMsg = document.getElementById('statusMsg');
+
+/* modal refs */
+const overlay = document.getElementById('resultModalOverlay');
+const modalIcon = document.getElementById('modalIcon');
+const modalTitle = document.getElementById('modalTitle');
+const modalText = document.getElementById('modalText');
+const modalDetail = document.getElementById('modalDetail');
+const modalFormula = document.getElementById('modalFormula');
+const modalCountdown = document.getElementById('modalCountdown');
+const modalOkBtn = document.getElementById('modalOkBtn');
+const modalShowFormulaBtn = document.getElementById('modalShowFormulaBtn');
+
+/* intro & gameover refs */
+const introOverlay = document.getElementById('introOverlay');
+const introStartBtn = document.getElementById('introStartBtn');
+const gameOverOverlay = document.getElementById('gameOverOverlay');
+const finalScoreText = document.getElementById('finalScoreText');
+const gameOverRestartBtn = document.getElementById('gameOverRestartBtn');
+
+/* Utility */
+function updateUI(){
+  timeLeftEl.textContent = timeLeft + 's';
+  levelEl.textContent = level;
+  scoreDisplay.textContent = score;
+}
+function showMessage(t){
+  messageBox.textContent = t;
+  statusMsg.textContent = t;
+}
+function setInputEnabled(enabled){
+  answerInput.disabled = !enabled;
+  btnCheck.disabled = !enabled;
+  answerInput.style.opacity = enabled? '1' : '0.7';
+  btnCheck.style.opacity = enabled? '1' : '0.7';
+  if(enabled) answerInput.focus();
+}
+
+/* render visuals */
+function renderNetForCurrent(){
+  if(currentMode === 'volume'){
+    const map = {
+      'cube': 'images/cube.png',
+      'rectprism': 'images/rectprism.png',
+      'cylinder': 'images/cylinder.png',
+      'cone': 'images/cone.png',
+      'pyramid': 'images/pyramid.png',
+      'sphere': 'images/sphere.png'
+    };
+    const src = map[current.id] || '';
+    netVisual.innerHTML = src ? `<img src="${src}" alt="${current.name}" />` : '';
+  } else {
+    let svg = '';
+    switch(current.id){
+      case 'square':
+        svg = `<svg width="220" height="140" viewBox="0 0 220 140"><rect x="40" y="20" width="120" height="100" fill="#e6f6ff" stroke="#0ea5a3"/></svg>`;
+        break;
+      case 'rectangle':
+        svg = `<svg width="220" height="140" viewBox="0 0 220 140"><rect x="30" y="30" width="160" height="80" fill="#fff1f2" stroke="#fb7185"/></svg>`;
+        break;
+      case 'circle':
+        svg = `<svg width="220" height="140" viewBox="0 0 220 140"><circle cx="110" cy="70" r="50" fill="#eef2ff" stroke="#6366f1"/></svg>`;
+        break;
+      case 'triangle':
+        svg = `<svg width="220" height="140" viewBox="0 0 220 140"><polygon points="110,20 40,110 180,110" fill="#ecfccb" stroke="#65a30d"/></svg>`;
+        break;
+      default:
+        svg = '';
+    }
+    netVisual.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%">${svg}</div>`;
+  }
+}
+
+/* formula builder */
+function safeNum(x){ return Number(x).toFixed(2); }
+function formulaHtmlFor(item, paramsArr, expected){
+  const unit = item.type === 'volume' ? 'cm³' : 'cm²';
+  if(item.type === 'volume'){
+    switch(item.id){
+      case 'cube': { const a = paramsArr[0]; return `<strong>Fórmula:</strong> V = a<sup>3</sup><br><br><strong>Substituição:</strong><br>V = ${a}<sup>3</sup> = ${safeNum(expected)} ${unit}`; }
+      case 'rectprism': { const [l,w,h]=paramsArr; return `<strong>Fórmula:</strong> V = comprimento × largura × altura<br><br><strong>Substituição:</strong><br>V = ${l} × ${w} × ${h} = ${safeNum(expected)} ${unit}`; }
+      case 'cylinder': { const [r,h]=paramsArr; return `<strong>Fórmula:</strong> V = π × r<sup>2</sup> × altura<br><br><strong>Substituição:</strong><br>V = ${PI} × ${r}<sup>2</sup> × ${h} = ${safeNum(expected)} ${unit}`; }
+      case 'cone': { const [r,h]=paramsArr; return `<strong>Fórmula:</strong> V = (π × r<sup>2</sup> × altura) / 3<br><br><strong>Substituição:</strong><br>V = (${PI} × ${r}<sup>2</sup> × ${h}) / 3 = ${safeNum(expected)} ${unit}`; }
+      case 'pyramid': { const [a,h]=paramsArr; return `<strong>Fórmula:</strong> V = (a<sup>2</sup> × altura) / 3<br><br><strong>Substituição:</strong><br>V = (${a}<sup>2</sup> × ${h}) / 3 = ${safeNum(expected)} ${unit}`; }
+      case 'sphere': { const [r]=paramsArr; return `<strong>Fórmula:</strong> V = (4/3) × π × r<sup>3</sup><br><br><strong>Substituição:</strong><br>V = (4/3) × ${PI} × ${r}<sup>3</sup> = ${safeNum(expected)} ${unit}`; }
+    }
+  } else {
+    switch(item.id){
+      case 'square': { const a=paramsArr[0]; return `<strong>Fórmula:</strong> A = a<sup>2</sup><br><br><strong>Substituição:</strong><br>A = ${a}<sup>2</sup> = ${safeNum(expected)} ${unit}`; }
+      case 'rectangle': { const [l,w]=paramsArr; return `<strong>Fórmula:</strong> A = comprimento × largura<br><br><strong>Substituição:</strong><br>A = ${l} × ${w} = ${safeNum(expected)} ${unit}`; }
+      case 'circle': { const r=paramsArr[0]; return `<strong>Fórmula:</strong> A = π × r<sup>2</sup><br><br><strong>Substituição:</strong><br>A = ${PI} × ${r}<sup>2</sup> = ${safeNum(expected)} ${unit}`; }
+      case 'triangle': { const [b,h]=paramsArr; return `<strong>Fórmula:</strong> A = (base × altura) / 2<br><br><strong>Substituição:</strong><br>A = (${b} × ${h}) / 2 = ${safeNum(expected)} ${unit}`; }
+    }
+  }
+  return `Valor: ${safeNum(expected)}`;
+}
+
+/* modal countdown */
+function startModalCountdown(delayMs){
+  if(modalInterval){ clearInterval(modalInterval); modalInterval = null; }
+  if(nextTimeout){ clearTimeout(nextTimeout); nextTimeout = null; }
+
+  let remaining = Math.ceil(delayMs / 1000);
+  modalCountdown.textContent = `Próxima em ${remaining}s`;
+
+  modalInterval = setInterval(() => {
+    remaining -= 1;
+    if(remaining <= 0){
+      modalCountdown.textContent = 'Indo para a próxima...';
+      clearInterval(modalInterval);
+      modalInterval = null;
+    } else {
+      modalCountdown.textContent = `Próxima em ${remaining}s`;
+    }
+  }, 1000);
+
+  nextTimeout = setTimeout(() => {
+    if(modalInterval){ clearInterval(modalInterval); modalInterval = null; }
+    closeModalAndContinue();
+  }, delayMs);
+}
+
+/* open result modal */
+function openModal({ type, expected, unitLabel, pointsDelta }){
+  if(modalInterval){ clearInterval(modalInterval); modalInterval=null; }
+  if(nextTimeout){ clearTimeout(nextTimeout); nextTimeout=null; }
+
+  overlay.classList.add('show');
+  overlay.setAttribute('aria-hidden','false');
+
+  if(type === 'correct'){
+    modalIcon.className = 'modal-icon success';
+    modalIcon.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9" fill="#ecfdf5" stroke="none"/>
+        <path d="M9 12l2 2 4-4" stroke="#059669" stroke-width="2.5" fill="none" />
+      </svg>`;
+    modalTitle.textContent = 'Parabéns!';
+    modalText.textContent = `Você acertou! +${pointsDelta} pontos`;
+  } else {
+    modalIcon.className = 'modal-icon error';
+    modalIcon.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9" fill="#fff1f2" stroke="none"/>
+        <path d="M15.5 8.5 L8.5 15.5 M8.5 8.5 L15.5 15.5" stroke="#ef4444" stroke-width="2.5" />
+      </svg>`;
+    modalTitle.textContent = 'Atenção';
+    modalText.textContent = 'Resposta incorreta';
+  }
+
+  modalDetail.textContent = `${unitLabel} = ${Number(expected).toFixed(2)}`;
+  modalFormula.innerHTML = formulaHtmlFor(current, params, expected);
+  modalFormula.style.display = 'none';
+  modalShowFormulaBtn.textContent = 'Mostrar fórmula';
+
+  startModalCountdown(DELAY_MS);
+}
+
+/* close result modal and continue */
+function closeModalAndContinue(){
+  overlay.classList.remove('show');
+  overlay.setAttribute('aria-hidden','true');
+  if(modalInterval){ clearInterval(modalInterval); modalInterval=null; }
+  if(nextTimeout){ clearTimeout(nextTimeout); nextTimeout=null; }
+  if(running && timeLeft > 0) nextChallenge();
+  else setInputEnabled(false);
+}
+
+/* game over modal */
+function showGameOverModal(){
+  overlay.classList.remove('show');
+  overlay.setAttribute('aria-hidden','true');
+  if(modalInterval){ clearInterval(modalInterval); modalInterval=null; }
+  if(nextTimeout){ clearTimeout(nextTimeout); nextTimeout=null; }
+
+  finalScoreText.textContent = `Sua pontuação: ${score}`;
+  gameOverOverlay.classList.add('show');
+  gameOverOverlay.setAttribute('aria-hidden','false');
+}
+function hideGameOverModalAndRestart(){
+  gameOverOverlay.classList.remove('show');
+  gameOverOverlay.setAttribute('aria-hidden','true');
+  running = true;
+  timeLeft = INITIAL_TIME;
+  level = 1;
+  score = 0;
+  updateUI();
+  nextChallenge();
+  showMessage('Jogo reiniciado. Boa sorte!');
+}
+
+/* modal button behaviors */
+modalOkBtn.addEventListener('click', () => {
+  if(nextTimeout){ clearTimeout(nextTimeout); nextTimeout = null; }
+  if(modalInterval){ clearInterval(modalInterval); modalInterval = null; }
+  closeModalAndContinue();
+});
+modalShowFormulaBtn.addEventListener('click', () => {
+  if(!modalFormula) return;
+  if(modalFormula.style.display === 'none' || modalFormula.style.display === ''){
+    modalFormula.style.display = 'block';
+    modalShowFormulaBtn.textContent = 'Ocultar fórmula';
+  } else {
+    modalFormula.style.display = 'none';
+    modalShowFormulaBtn.textContent = 'Mostrar fórmula';
+  }
+});
+gameOverRestartBtn.addEventListener('click', hideGameOverModalAndRestart);
+
+/* intro modal */
+function showIntro(){ introOverlay.classList.add('show'); introOverlay.setAttribute('aria-hidden','false'); introStartBtn.focus(); }
+function hideIntro(){ introOverlay.classList.remove('show'); introOverlay.setAttribute('aria-hidden','true'); }
+introStartBtn.addEventListener('click', ()=> {
+  hideIntro();
+  if(!running){
+    running = true;
+    timeLeft = INITIAL_TIME;
+    level = 1;
+    score = 0;
+    updateUI();
+    nextChallenge();
+    showMessage('Jogo iniciado. Boa sorte!');
+  }
+});
+introStartBtn.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); introStartBtn.click(); }});
+window.addEventListener('load', ()=> { showIntro(); });
+
+/* next challenge: set questionTitle (enunciado) */
+function nextChallenge(){
+  if(nextTimeout){ clearTimeout(nextTimeout); nextTimeout=null; }
+  currentMode = (Math.random() < 0.6) ? 'volume' : 'area';
+  if(currentMode === 'volume'){
+    current = SOLIDS[Math.floor(Math.random() * SOLIDS.length)];
+    params = current.param.map(()=> Math.floor(Math.random()*6)+1);
+    renderNetForCurrent();
+    // set enunciado/title exactly as requested
+    questionTitleEl.textContent = `Nível ${level}: calcule o volume do ${current.name}`;
+    solidHintEl.textContent = current.hint;
+    const pText = current.param.map((p,i)=> `${paramNamesMap[p] || p}: ${params[i]} cm`).join(' • ');
+    paramListEl.textContent = pText;
+  } else {
+    current = AREAS[Math.floor(Math.random() * AREAS.length)];
+    params = current.param.map(()=> Math.floor(Math.random()*6)+1);
+    renderNetForCurrent();
+    questionTitleEl.textContent = `Nível ${level}: calcule a área do ${current.name}`;
+    solidHintEl.textContent = `Calcule a área do ${current.name.toLowerCase()}`;
+    const pText = current.param.map((p,i)=> `${paramNamesMap[p] || p}: ${params[i]} cm`).join(' • ');
+    paramListEl.textContent = pText;
+  }
+  answerInput.value = '';
+  setInputEnabled(true);
+  showMessage(`Nível ${level}: responda a questão acima.`);
+}
+
+/* check answer */
+function checkAnswer(){
+  if(!current) return;
+  let expected, unitLabel;
+  if(currentMode === 'volume'){
+    expected = current.volume(...params);
+    unitLabel = 'Volume';
+  } else {
+    expected = current.area(...params);
+    unitLabel = 'Área';
+  }
+  const userValue = parseFloat(answerInput.value);
+  const tolerance = Math.max(0.2, Math.abs(expected) * 0.02);
+  setInputEnabled(false);
+
+  if (Number.isFinite(userValue) && Math.abs(userValue - expected) <= tolerance) {
+    const delta = 15 * level;
+    score += delta;
+    openModal({ type:'correct', expected, unitLabel: unitLabel + ' (' + (currentMode==='volume' ? 'cm³' : 'cm²') + ')', pointsDelta: delta });
+    level += 1;
+    timeLeft += TIME_BONUS;
+  } else {
+    score = Math.max(0, score - 5);
+    openModal({ type:'wrong', expected, unitLabel: unitLabel + ' (' + (currentMode==='volume' ? 'cm³' : 'cm²') + ')' });
+  }
+  updateUI();
+}
+
+/* timer */
+function tick(){
+  if(!running) return;
+  timeLeft -= 1;
+  if(timeLeft <= 0){
+    running = false;
+    overlay.classList.remove('show');
+    overlay.setAttribute('aria-hidden','true');
+    if(nextTimeout){ clearTimeout(nextTimeout); nextTimeout=null; }
+    if(modalInterval){ clearInterval(modalInterval); modalInterval=null; }
+    showGameOverModal();
+    showMessage(finalMessage());
+    setInputEnabled(false);
+  }
+  updateUI();
+}
+function finalMessage(){ return `⏰ Tempo esgotado! Sua pontuação final: ${score}`; }
+
+/* controls */
+btnCheck.addEventListener('click', checkAnswer);
+answerInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') checkAnswer(); });
+
+btnReset.addEventListener('click', ()=> {
+  level = 1; timeLeft = INITIAL_TIME; score = 0; running = false;
+  if(nextTimeout){ clearTimeout(nextTimeout); nextTimeout=null; }
+  if(modalInterval){ clearInterval(modalInterval); modalInterval=null; }
+  updateUI(); showMessage('Jogo reiniciado. Abra o jogo com Começar.'); setInputEnabled(false);
+});
+
+/* init */
+updateUI();
+showMessage('Clique em Começar no modal de boas-vindas para iniciar.');
+setInterval(tick, 1000);
+
+/* pause when hidden */
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) running=false; else if(!document.hidden && timeLeft>0) running=true; });
+</script>
+</body>
+</html>
